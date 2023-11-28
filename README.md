@@ -19,3 +19,7 @@ cd WMM-Simulator
 cargo update
 cargo run
 ```
+
+## Useful Info
+
+Previously used competition mazes can be found in `resources/`.
