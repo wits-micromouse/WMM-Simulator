@@ -1,19 +1,15 @@
 import sys
+import os
 import math as m
+import json
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
-def main():
-    if len(sys.argv) < 3:
-        eprint("Invalid arguments provided - Please specify the file to try convert and its grid size")
-        exit()
-
-    filepath = sys.argv[1]
-    grid_size = int(sys.argv[2])
+def encode_maze(maze_filepath: str, maze_size: int) -> str:
     file = None
     try:
-        file = open(filepath, "r")
+        file = open(maze_filepath, "r")
     except:
         eprint("Failed to open file")
         exit()
@@ -28,15 +24,16 @@ def main():
     # col = (index % (size / 2)) * 2 + (1 - size % 2) * ( row % 2 )
 
     encoding = "0x"
-    for i in range(int((grid_size**2 - m.floor(grid_size**2 / 2)))):
-        true_r = int(m.floor( 2 * i / grid_size ))
-        true_c = int(( i % ( grid_size / 2 ) ) * 2 + (1 - grid_size % 2) * ( true_r % 2 ))
+    for i in range(int((maze_size**2 - m.floor(maze_size**2 / 2)))):
+        true_r = int(m.floor( 2 * i / maze_size ))
+        true_c = int(( i % ( maze_size / 2 ) ) * 2 + (1 - maze_size % 2) * ( true_r % 2 ))
 
-        r = 2 * grid_size - 1 - 2 * true_r
+        r = 2 * maze_size - 1 - 2 * true_r
         c = 2 * true_c + 1
 
         cell_encoding = 0
-        assert(lines[r][c] == ' ') # check its a valid cell being read
+        if (lines[r][c] != ' '): # If invalid encoding then just skip
+            return "0x0"
         if lines[r - 1][c] == '-': # NORTH
             cell_encoding = cell_encoding | 0b0001
         if lines[r + 1][c] == '-': # SOUTH 
@@ -48,8 +45,36 @@ def main():
 
         encoding += hex(cell_encoding)[2]
 
-    print(encoding)
     file.close()
+    return encoding
+
+def save_mazes(maze_dir):
+    mazesize = 16
+    dir = os.fsencode(maze_dir)
+    mazes = []
+
+    for file in os.listdir(dir):
+        filename = os.fsdecode(file)
+        filepath = dir.decode() + filename
+        encoding = encode_maze(filepath, 16)
+
+        mazes.append({
+            "name": filename,
+            "size": mazesize,
+            "encoding": encoding
+        })
+
+    saved_mazes = open("resources/previous_mazes.json", "w")
+    saved_mazes.write(json.dumps(mazes))
+
+def main():
+    if len(sys.argv) < 2:
+        eprint("Invalid arguments provided - Please specify the file to try convert and its grid size")
+        exit()
+
+    all_mazes = sys.argv[1]
+    save_mazes(all_mazes)
+
 
 if __name__ == "__main__":
     main()
