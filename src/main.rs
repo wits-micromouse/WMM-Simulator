@@ -13,7 +13,7 @@ fn main() {
         .add_plugins(EguiPlugin)
         .add_plugins(PlayerPlugin)
         .insert_resource(KeyBindings {
-            toggle_grab_cursor: KeyCode::C,
+            toggle_grab_cursor: KeyCode::Tab,
             ..default()
         })
         .insert_resource(maze::MazeConfig::default())
@@ -36,7 +36,7 @@ fn controls_ui(
     mut contexts: EguiContexts,
 ) {
     egui::Window::new("Controls").show(contexts.ctx_mut(), |ui| {
-        ui.label("Toggle Cursor - c");
+        ui.label("Toggle Cursor - tab");
         ui.label("Walk - wasd");
         ui.label("Look - mouse");
         ui.label("Fly up - space");
