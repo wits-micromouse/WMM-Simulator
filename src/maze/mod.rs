@@ -7,6 +7,8 @@ use serde::{Serialize, Deserialize};
 use bevy::{prelude::*, ecs::system::ResMut};
 use bevy_egui::{egui, EguiContexts};
 
+use bevy_rapier3d::prelude::*;
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 pub struct Maze {
     name: String,
@@ -131,7 +133,11 @@ pub fn maze_ui (
 
                 if ui.button("Cancel").clicked() {
                     maze_cfg.prev_mazes.pop();
+                    maze_cfg.current_maze = maze_cfg.prev_mazes.len() - 1;
                     maze_cfg.edit_maze = false;
+
+                    let mut origin = Transform::from_xyz(0., 0.4, 0.);
+                    draw_maze(&mut origin, &mut maze_cfg, &mut meshes, &mut materials, &mut commands);
                 };
             });
         }
@@ -224,13 +230,23 @@ pub fn draw_maze(
     );
     let outer_wall_mat = Color::WHITE;
     for i in 0..wall_positions.len() {
+        let outer_wall_transform = Transform::from_xyz(wall_positions[i].0, 0., wall_positions[i].1).with_rotation(Quat::from_rotation_y(wall_positions[i].2));
+
+        let outside_wall_collider = commands.spawn(Collider::cuboid(
+            cfg.cell_space * current_maze.size as f32 / 2., maze_height / 2., 0.05
+        ))
+        .insert(TransformBundle::from(
+            origin.mul_transform(outer_wall_transform)
+        )).id();
+
         let new_outside_wall = commands.spawn(PbrBundle {
             mesh: meshes.add(outer_wall_mesh.into()),
             material: materials.add(outer_wall_mat.into()),
-            transform: origin.mul_transform(Transform::from_xyz( wall_positions[i].0, 0., wall_positions[i].1).with_rotation(Quat::from_rotation_y(wall_positions[i].2))),
+            transform: origin.mul_transform(outer_wall_transform),
             ..default()
-        });
-        cfg.maze_entities.push(new_outside_wall.id());
+        }).id();
+        cfg.maze_entities.push(new_outside_wall);
+        cfg.maze_entities.push(outside_wall_collider);
     }
 
     let start_marker = commands.spawn(PbrBundle {
@@ -274,17 +290,26 @@ pub fn draw_maze(
         let inner_wall_encodings = [1, 2, 4, 8];
         for i in 0..4 {
             if cell_value & inner_wall_encodings[i] == inner_wall_encodings[i] {
+                let cell_wall_transform = origin.mul_transform(Transform::from_xyz(
+                    cell_center + r as f32 * cfg.cell_space + inner_wall_translations[i].0,
+                    0.,
+                    cell_center + c as f32 * cfg.cell_space + inner_wall_translations[i].1
+                ).with_rotation(Quat::from_rotation_y(inner_wall_rotations[i])));
+
+                let cell_wall_collider = commands.spawn(Collider::cuboid(
+                inner_wall_width / 2., 0.8 * maze_height / 2., cfg.cell_space / 2.
+                )).insert(
+                    TransformBundle::from(cell_wall_transform)
+                ).id();
+
                 let cell_wall = commands.spawn(PbrBundle {
                     mesh: meshes.add(inner_wall_mesh.into()),
                     material: materials.add(inner_wall_mat.into()),
-                    transform: origin.mul_transform(Transform::from_xyz(
-                        cell_center + r as f32 * cfg.cell_space + inner_wall_translations[i].0,
-                        0.,
-                        cell_center + c as f32 * cfg.cell_space + inner_wall_translations[i].1
-                    ).with_rotation(Quat::from_rotation_y(inner_wall_rotations[i]))),
+                    transform: cell_wall_transform,
                     ..default()
-                });        
-                cfg.maze_entities.push(cell_wall.id());
+                }).id();
+                cfg.maze_entities.push(cell_wall);
+                cfg.maze_entities.push(cell_wall_collider);
             }
         }
 

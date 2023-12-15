@@ -5,6 +5,8 @@ use bevy::{
 use bevy_egui::{egui, EguiPlugin, EguiContexts};
 use bevy_flycam::{PlayerPlugin, KeyBindings};
 
+use bevy_rapier3d::prelude::*;
+
 mod maze;
 
 fn main() {
@@ -12,6 +14,8 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)
         .add_plugins(PlayerPlugin)
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+        // .add_plugins(RapierDebugRenderPlugin::default())
         .insert_resource(KeyBindings {
             toggle_grab_cursor: KeyCode::Tab,
             ..default()
@@ -24,7 +28,7 @@ fn main() {
 
 fn perf_stats_ui(
     mut contexts: EguiContexts,
-    time: Res<Time<Real>>,
+    time: Res<Time<bevy::prelude::Real>>,
 ) {
     egui::Window::new("Stats").show(contexts.ctx_mut(), |ui| {
         ui.label(format!("FPS: {:.2}", 1. / time.delta_seconds()));
@@ -82,4 +86,10 @@ fn setup(
         material: materials.add(Color::DARK_GREEN.into()),
         ..default()
     });
+
+    commands.spawn(
+        Collider::cuboid(
+            100.0, 0.4, 100.
+        )
+    );
 }
