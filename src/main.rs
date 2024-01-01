@@ -10,11 +10,14 @@ use bevy_rapier3d::prelude::*;
 mod maze;
 
 fn main() {
+    let mut phys_plugin = RapierPhysicsPlugin::<NoUserData>::default();
+    phys_plugin = phys_plugin.with_physics_scale(100.);
+
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)
         .add_plugins(PlayerPlugin)
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugins(phys_plugin)
         // .add_plugins(RapierDebugRenderPlugin::default())
         .insert_resource(KeyBindings {
             toggle_grab_cursor: KeyCode::Tab,
@@ -64,17 +67,17 @@ fn setup(
         ..default()
     });
 
-    // Sky
+    // // Sky
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Box::default())),
+            mesh: meshes.add(Mesh::from(shape::UVSphere::default())),
             material: materials.add(StandardMaterial {
                 base_color: Color::hex("99BADD").unwrap(),
                 unlit: true,
                 cull_mode: None,
                 ..default()
             }),
-            transform: Transform::from_scale(Vec3::splat(200.0)),
+            transform: Transform::from_scale(Vec3::splat(500.0)),
             ..default()
         },
         NotShadowCaster,
