@@ -315,8 +315,4 @@ pub fn draw_maze(
     }).id();
     cfg.maze_entities.push(start_marker);
 
-
-
-
-
 }
